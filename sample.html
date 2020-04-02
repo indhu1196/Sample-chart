@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <tile>Chart</tile>
+    </head>
+    <body>
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/series-label.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>'
+<figure class="highcharts-figure">
+    <div id="container"></div>
+</figure>
+<style>
+.highcharts-figure, .highcharts-data-table table {
+    min-width: 360px;
+    max-width: 800px;
+    margin: 1em auto;
+}
+
+.highcharts-data-table table {
+        font-family: Verdana, sans-serif;
+        border-collapse: collapse;
+        border: 1px solid red;
+        margin: 10px auto;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+}
+.highcharts-data-table caption {
+    padding: 1em 0;
+    font-size: 1.2em;
+    color: #555;
+}
+.highcharts-data-table th {
+        font-weight: 600;
+    padding: 0.5em;
+}
+.highcharts-data-table td, .highcharts-data-table th, .highcharts-data-table caption {
+    padding: 0.5em;
+}
+.highcharts-data-table thead tr, .highcharts-data-table tr:nth-child(even) {
+    background: #f8f8f8;
+}
+.highcharts-data-table tr:hover {
+    background: #f1f7ff;
+}
+
+</style>
+<script>
+$(document).ready(function() {
+console.log("TEst");
+var india_chart_plot_series = [];
+var india_chart_plot_bands = {};
+var india_chart_plot_annotations = {};
+var india_chart_colors = ["rgba(0, 0, 0, 0.03)", "rgba(0, 0, 0, 0)"];
+function calculatePlotBands(series) {
+  india_chart_max_val = series.slice(-1)[0];
+  india_chart_current_val = 100;
+  india_chart_current_index = 0;
+  india_chart_color_index = 0;
+  india_chart_bands = [];
+  india_chart_annotations = [];
+  while (india_chart_current_val <= india_chart_max_val) {
+    india_chart_index = india_chart_series.findIndex(function(number) {
+      return number >= india_chart_current_val;
+    });
+    india_chart_index += 1;
+    india_chart_bands.push({
+      from: india_chart_current_index,
+      to: india_chart_index,
+      color: india_chart_colors[india_chart_color_index % 2]
+    });
+
+    india_chart_annotations.push({
+      point: {
+        xAxis: 0,
+        yAxis: 0,
+        x: india_chart_index,
+        y: india_chart_series[india_chart_index - 1]
+      },
+      text:
+        india_chart_index -
+        india_chart_current_index +
+        " days to >= " +
+        india_chart_current_val +
+        " cases"
+    });
+
+    india_chart_current_index = india_chart_index;
+    india_chart_current_val *= 2;
+    india_chart_color_index += 1;
+  }
+
+  india_chart_bands.push({
+    from: india_chart_current_index,
+    to: india_chart_max_val,
+    color: india_chart_colors[india_chart_color_index % 2]
+  });
+
+  return {
+    bands: india_chart_bands,
+    annotations: india_chart_annotations
+  };
+}
+function indiaChartExtractData(entries) {
+  india_chart_series = [];
+  india_chart_day = 0;
+  
+  entries.forEach(function(entry) {
+    if (entry.gs$cell.row !== "1") {
+      if (entry.gs$cell.col === "2") {
+        india_chart_series.push(parseInt(entry.gs$cell.$t));
+        india_chart_day += 1;
+      }
+    }
+  });
+  return india_chart_series;
+}
+$.ajax({
+  url: 'https://spreadsheets.google.com/feeds/cells/1myLRTsBiNQ3TAF2ijJTLT7F9Mm20XRGHkE7vX-kEoAc/1/public/full?alt=json',
+  success: function(result) {
+  //console.log("INDIA DATA"+JSON.stringify(result));
+    india_chart_plot_data = result;
+    india_chart_plot_series = indiaChartExtractData(
+      india_chart_plot_data.feed.entry
+    );
+        response = calculatePlotBands(india_chart_series);
+    india_chart_plot_bands = response.bands;
+        console.log("INDIA DATA"+JSON.stringify(india_chart_plot_bands));
+        india_chart_plot_annotations = response.annotations;
+        createChart(india_chart_plot_series);
+  }
+});
+function createChart(india_chart_plot_series) {
+Highcharts.chart('container', {
+
+ chart: {
+      //plotBackgroundImage: 'https://stagingcovid.wpengine.com/wp-content/uploads/2020/03/COVIDIndia-LogoNew-MediumRes-300x37.png',
+      height: 439,
+      alignTicks: false,
+      type: "line",
+      events: {
+        render() {
+          const chart = this,
+            renderer = chart.renderer,
+            width = 100;
+
+          // Delete groups
+          if (chart.customImgGroup) {
+            chart.customImgGroup.destroy();
+          }
+
+          // Create groups
+          chart.customImgGroup = renderer.g("customImgGroup").add();
+
+          // Render texts
+          chart.renderer
+            .image(
+              "",
+              chart.plotLeft + chart.plotSizeX - width - 10,
+              chart.plotTop + chart.plotSizeY - 20,
+              width,
+              12.33
+            )
+            .add(chart.customImgGroup);
+        }
+      }
+    },
+
+    title: {
+      text: "",
+    },
+
+    xAxis: {
+      title: {
+        text: "Days since first case *"
+      },
+      labels: {
+        align: "left"
+      },
+      plotBands: india_chart_plot_bands,
+      allowDecimals: false,
+    },
+
+    yAxis: [
+      {
+        title: {
+          text: "Number of Cases"
+        },
+        gridLineColor: "rgba(0, 0, 0, 0)"
+      },
+      {
+        allowDecimals: false,
+        max: 15,
+        labels: {
+          style: {
+            color: "#4A4A4A"
+          }
+        },
+        title: {
+          style: {
+            color: "#4A4A4A"
+          }
+        },
+        opposite: true,
+        gridLineWidth: 0
+      }
+    ],
+
+    legend: {
+      enabled: false
+    },
+
+    plotOptions: {
+      series: {
+        label: {
+          connectorAllowed: false
+        },
+        pointStart: 1
+      }
+    },
+
+    series: [
+      {
+        name: "Covid-19 Cases in India",
+        data: india_chart_plot_series
+      }
+    ],
+
+    credits: {
+      enabled: false
+    },
+
+    responsive: {
+      rules: [
+        {
+          condition: {
+            maxWidth: 510,
+            margin: 0
+          },
+          chartOptions: {
+            chart: {
+              height: 400,
+              width: 400
+            },
+            xAxis: {
+              plotBands: india_chart_plot_bands
+            }
+          }
+        }
+      ]
+    },
+
+    annotations: [
+      {
+        labelOptions: {
+          align: "right",
+          verticalAlign: "top",
+          y: -25,
+          backgroundColor: "transparent",
+          borderColor: "transparent",
+          style: {
+            color: "#4A4A4A",
+            fontSize: "12px"
+          },
+          useHTML: true
+        },
+        labels: india_chart_plot_annotations
+      }
+    ]
+  });
+}
+});
+
+</script>
+</body>
+</html>
