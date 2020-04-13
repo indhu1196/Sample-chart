@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <tile>Chart</tile>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
         <script src="https://code.highcharts.com/highcharts.js"></script>
-        <script src="https://code.highcharts.com/modules/series-label.js"></script>
-        <script src="https://code.highcharts.com/modules/exporting.js"></script>
-        <script src="https://code.highcharts.com/modules/export-data.js"></script>
-        <script src="https://code.highcharts.com/modules/accessibility.js"></script>'
+        <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+        <!--<script src="https://code.highcharts.com/modules/series-label.js"></script>-->
         <figure class="highcharts-figure">
             <div id="container"></div>
         </figure>
+        <figure class="highcharts-figure">
+            <div id="totalDeath-container"></div>
+        </figure>
         <style>
+            .highcharts-button-box {
+                height: 0!important;
+            }
+            .highcharts-credits {
+                display: none;
+            }
         .highcharts-figure, .highcharts-data-table table {
             min-width: 360px;
             max-width: 800px;
@@ -47,31 +54,182 @@
         .highcharts-data-table tr:hover {
             background: #f1f7ff;
         }
+        #totalDeath-container .highcharts-graph, #totalDeath-container .highcharts-label-box.highcharts-tooltip-box {
+            stroke: #f00;
+        }
+        #totalDeath-container .highcharts-point, #totalDeath-container .highcharts-halo.highcharts-color-0,
+        #totalDeath-container .highcharts-markers.highcharts-series-0.highcharts-line-series.highcharts-color-0.highcharts-tracker.highcharts-series-hover path {
+            fill: #f00;
+        }
+        #totalDeath-container .highcharts-label.highcharts-tooltip.highcharts-color-0  text tspan:nth-child(2) {
+            fill: #f00!important;
+        }
+        #container .highcharts-graph, #container .highcharts-label-box.highcharts-tooltip-box {
+            stroke: orange;
+        }
+        #container .highcharts-point, #container .highcharts-halo.highcharts-color-0,
+        #container .highcharts-markers.highcharts-series-0.highcharts-line-series.highcharts-color-0.highcharts-tracker.highcharts-series-hover path {
+            fill: orange;
+        }
+        #container .highcharts-label.highcharts-tooltip.highcharts-color-0  text tspan:nth-child(2) {
+            fill: orange!important;
+        }
 
         </style>
         <script>
         $(document).ready(function() {
-        console.log("TEst");
-        var totalCases = [];
-		var deathDate = [];
+            Highcharts.setOptions({
+                lang: {
+                thousandsSep: ','
+                }
+            });
+            var totalCases = [];
+            var deathDate = [];
+            var dates = [];
+            $.ajax ({
+            'async': false,
+                    'global': false,
+                    'dataType': 'json',
+            'url': 'https://thefederal.com/api/scraper.php?m=Corona&t=dailyDeaths',
+                'success': function(data) {
+                    //console.log(data)
+                    data.forEach(function(key,value) {
+                            totalCases.push(parseInt(key["Daily Deaths"]));
+                            deathDate.push(key["Date"]);
+                        });
+                        
+                    totalCases.reverse();
+                    deathDate.reverse();
+                        if(screen.width <= 767) {
+                            stepValue = { step: 10};
+                        } else {
+                            stepValue = { step: 5};  
+                        }
+            // console.log("Deaths"+JSON.stringify(deathDate));
+            }
+
+            });
+
+            Highcharts.chart('container', {
+                exporting: {
+                    buttons: {
+                        customButton: {
+                            text: 'Linear',
+                            onclick: function() {
+                                this.yAxis[0].update({
+                                    type: 'linear'
+                                });
+                            }
+                        },
+                        customButton2: {
+                            text: 'Logarithmic',
+                            onclick: function() {
+                                this.yAxis[0].update({
+                                    type: 'logarithmic'
+                                });
+                            }
+                        }
+                    },
+                },
+                title: {
+                    text: ''
+                },
+
+                subtitle: {
+                    text: ''
+                },
+
+                yAxis: {
+            
+                    title: {
+                        text: 'Number of Deaths'
+                    }
+                },
+
+                xAxis: {
+
+                    type: 'datetime',
+                    tickPixelInterval: 400,
+                    categories : deathDate,
+                    labels:  stepValue
+                },
+
+                series: [{
+                    name: 'Daily Deaths',
+                    data: totalCases
+                }, ],
+
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 500,
+                        },
+
+                        chartOptions: {
+
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+
+            });
+            });
+
+        </script>
+        <script>
+        $(document).ready(function() {
+        var totalDeaths = [];
+		var totdeathDate = [];
         var dates = [];
         $.ajax ({
         'async': false,
                 'global': false,
                 'dataType': 'json',
-        'url': 'https://thefederal.com/api/scraper.php?m=Corona&t=dailyDeaths',
+        'url': 'https://thefederal.com/api/scraper.php?m=Corona&t=totalDeaths',
             'success': function(data) {
                 //console.log(data)
 				data.forEach(function(key,value) {
-						totalCases.push(parseInt(key["Daily Deaths"]));
-						deathDate.push(key["Date"]);
+						totalDeaths.push(parseInt(key["Total Deaths"]));
+						totdeathDate.push(key["Date"]);
 					});
-				totalCases.reverse();
-				deathDate.reverse();
-        console.log("Deaths"+JSON.stringify(totalCases));
+                    
+				totalDeaths.reverse();
+				totdeathDate.reverse();
+                    if(screen.width <= 767) {
+                        stepValue = { step: 10};
+                    } else {
+                        stepValue = { step: 5};  
+                    }
+        // console.log("Deaths"+JSON.stringify(totdeathDate));
         }
+
         });
-        Highcharts.chart('container', {
+
+        Highcharts.chart('totalDeath-container', {
+            exporting: {
+                buttons: {
+                    customButton: {
+                        text: 'Linear',
+                        onclick: function() {
+                            this.yAxis[0].update({
+                                type: 'linear'
+                            });
+                        }
+                    },
+                    customButton2: {
+                        text: 'Logarithmic',
+                        onclick: function() {
+                            this.yAxis[0].update({
+                                type: 'logarithmic'
+                            });
+                        }
+                    },
+                }
+            },
 
             title: {
                 text: ''
@@ -108,21 +266,24 @@
 			xAxis: {
 
                 type: 'datetime',
-                tickPixelInterval: 100,
-				categories : deathDate
+                tickPixelInterval: 400,
+				categories : totdeathDate,
+                labels:  stepValue
             },
 
             series: [{
-                name: 'Daily Deaths',
-                data: totalCases
+                name: 'Total Deaths',
+                data: totalDeaths
             }, ],
 
             responsive: {
                 rules: [{
                     condition: {
-                        maxWidth: 500
+                        maxWidth: 500,
                     },
+
                     chartOptions: {
+
                         legend: {
                             layout: 'horizontal',
                             align: 'center',
