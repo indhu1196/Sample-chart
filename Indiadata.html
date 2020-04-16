@@ -19,6 +19,44 @@
         <div id="dailydeceased-container"></div>
       </figure>
       <style>
+          .highcharts-figure button {
+            background: #dddddd;
+            color: #4c4c4c;
+            border: none;
+            outline: none;
+            padding: 5px 15px;
+          }
+          .highcharts-figure button:hover {
+            background: rgb(164, 1, 1);
+            color: #ffffff;
+          }
+          .highcharts-button.highcharts-contextbutton {
+                display: none;
+            }
+            .highcharts-exporting-group .highcharts-button:nth-child(2) {
+                transform: translate(740px ,5px)!important;
+            }
+            .highcharts-exporting-group .highcharts-button:nth-child(3) {
+                transform: translate(650px ,5px)!important;
+            }
+            .highcharts-button-box {
+                height: 20px!important;
+               fill: #dddddd; 
+            }
+            .highcharts-button text {
+                color: #4c4c4c!important;
+                fill: #4c4c4c!important;
+            }
+            .highcharts-button.highcharts-button-hover text {
+                color: #ffffff!important;
+                fill: #ffffff!important;
+            }
+            .highcharts-button.highcharts-button-hover .highcharts-button-box {
+               fill: rgb(164, 1, 1);
+            }
+            .highcharts-button text {
+                transform: translateY(-2px);
+            }
          .highcharts-credits {
          display: none;
          }
